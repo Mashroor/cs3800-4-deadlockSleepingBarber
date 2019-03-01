@@ -177,7 +177,10 @@ bool Access = 1;
 int BarberR = 0;
 int CustomerR = 0;
 int custsDone = 0;
-binary_semaphore lolPoggers;
+
+//Basic Idea for solution:
+//Since the barber is deadlocking, I decided to make checks outside of the semaphore to decide
+//When to lock and unlock the process, preemptively. I exit the program when all 4 customers have been dealt with.
 
 void Barber(int thread_num) {
     while (custsDone < NUM_CUSTOMERS) {
@@ -202,7 +205,7 @@ void Barber(int thread_num) {
         }else{
             AccessToWaitingRoomSeats.signal();
         }
-        custsDone++;
+        custsDone++; //given haircut, up the count
         CutHair(thread_num);
     }
 }
@@ -238,7 +241,7 @@ void Customer(int thread_num) {
         if(Access == 0){
             Access = 1;
         }else{
-            custsDone++;
+            custsDone++; //if customer leaves, add customer done
             AccessToWaitingRoomSeats.signal();
         }
     }
