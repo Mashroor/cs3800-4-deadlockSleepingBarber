@@ -226,16 +226,16 @@ void Customer(int thread_num) {
             BarberR--;
             BarberReady.wait();
         }
-        custsDone++;
         GetHairCut(thread_num);
+        custsDone++;
     }
     else
     {
         //no space, must leave! 
-        custsDone++;
         if(Access == 0){
             Access = 1;
         }else{
+            custsDone++;
             AccessToWaitingRoomSeats.signal();
         }
     }
