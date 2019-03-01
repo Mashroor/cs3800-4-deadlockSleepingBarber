@@ -172,31 +172,72 @@ void CutHair(int id)
         ONLY MAKE CHANGES BELOW THIS LINE
 
 ****************************************************/
+bool Access = 1;
+int BarberR = 0;
+int CustomerR = 0;
+int custsDone = 0;
 
 void Barber(int thread_num) {
     while (true) {
-        CustomerReady.wait();
-        AccessToWaitingRoomSeats.wait();
+        if(CustomerR < 0){
+            CustomerR--;
+            CustomerReady.wait();
+        }
+        if(Access == 1){
+            Access = 0;
+        }else{
+            AccessToWaitingRoomSeats.wait();
+        }
         numberOfFreeWaitingRoomSeats += 1;
-        BarberReady.signal();
-        AccessToWaitingRoomSeats.signal();
+        if(BarberR <= 0){
+            BarberR++;
+            BarberReady.signal();
+        }
+        if(Access == 0){
+            Access = 1;
+        }else{
+            AccessToWaitingRoomSeats.signal();
+        }
         CutHair(thread_num);
+        if(custsDone == NUM_CUSTOMERS){ // finish and sleep barbers after 4 customers are cut
+            return;
+        }
     }
 }
 
 void Customer(int thread_num) {
-    AccessToWaitingRoomSeats.wait();
+    if(Access == 1){
+        Access=0;
+    }else{
+        AccessToWaitingRoomSeats.wait();
+    }
     if (numberOfFreeWaitingRoomSeats > 0) {
         numberOfFreeWaitingRoomSeats -= 1;
-        CustomerReady.signal();
-        AccessToWaitingRoomSeats.signal();
-        BarberReady.wait();
+        if(CustomerR <= 0){
+            CustomerR++;
+            CustomerReady.signal();
+        }
+        if(Access == 0){
+            Access = 1;
+        }else{
+            AccessToWaitingRoomSeats.signal();
+        }
+        if(BarberR < 0){
+            BarberR--;
+            BarberReady.wait();
+        }
+        custsDone++;
         GetHairCut(thread_num);
     }
     else
     {
         //no space, must leave! 
-        AccessToWaitingRoomSeats.signal();
+        custsDone++;
+        if(Access == 0){
+            Access = 1;
+        }else{
+            AccessToWaitingRoomSeats.signal();
+        }
     }
 }
 
