@@ -172,13 +172,16 @@ void CutHair(int id)
         ONLY MAKE CHANGES BELOW THIS LINE
 
 ****************************************************/
+// 
 bool Access = 1;
 int BarberR = 0;
 int CustomerR = 0;
 int custsDone = 0;
+binary_semaphore lolPoggers;
 
 void Barber(int thread_num) {
-    while (true) {
+    while (custsDone < NUM_CUSTOMERS) {
+        
         if(CustomerR < 0){
             CustomerR--;
             CustomerReady.wait();
@@ -189,6 +192,7 @@ void Barber(int thread_num) {
             AccessToWaitingRoomSeats.wait();
         }
         numberOfFreeWaitingRoomSeats += 1;
+
         if(BarberR <= 0){
             BarberR++;
             BarberReady.signal();
@@ -198,10 +202,8 @@ void Barber(int thread_num) {
         }else{
             AccessToWaitingRoomSeats.signal();
         }
+        custsDone++;
         CutHair(thread_num);
-        if(custsDone == NUM_CUSTOMERS){ // finish and sleep barbers after 4 customers are cut
-            return;
-        }
     }
 }
 
@@ -212,7 +214,9 @@ void Customer(int thread_num) {
         AccessToWaitingRoomSeats.wait();
     }
     if (numberOfFreeWaitingRoomSeats > 0) {
+
         numberOfFreeWaitingRoomSeats -= 1;
+        
         if(CustomerR <= 0){
             CustomerR++;
             CustomerReady.signal();
@@ -227,7 +231,6 @@ void Customer(int thread_num) {
             BarberReady.wait();
         }
         GetHairCut(thread_num);
-        custsDone++;
     }
     else
     {
